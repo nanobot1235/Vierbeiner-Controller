@@ -6,9 +6,13 @@
 #define Coord_x 50
 #define Coord_y 37.5
 #define Coord_z 50
+#define Coord_q 15
+#define Coord_w 15
 #define Coord_e 15
 
-#define debounceTollerance 50
+#define Coord_f 75
+
+#define debounceTollerance 250
 
 
 //functions

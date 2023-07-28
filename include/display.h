@@ -41,6 +41,7 @@
 #include <Wire.h>
 #endif
 
+byte mode = 0;
 
 /*
   U8g2lib Example Overview:
@@ -75,7 +76,7 @@ class displays{
     u8g2.print("v");
     u8g2.setCursor(85, 15);
     u8g2.print("mode: ");
-    u8g2.print(1);
+    u8g2.print(mode);
     u8g2.drawLine(0, 20, 128, 20);
     u8g2.sendBuffer();
   }

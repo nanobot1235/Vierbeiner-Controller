@@ -13,6 +13,8 @@ const double toleranz = 0.5;
 
 float oldbodycoords[2][3];
 float bodycoords[2][3];
+float walk[3];
+float oldwalk[3];
 
 uint8_t address[6]  = {0x00, 0x12, 0x06, 0x01, 0x51, 0x15};
 
@@ -29,8 +31,9 @@ void bye(){
 }
 
 int offsets[6];
-byte pins[] = {32, 33, 34, 0, 0, 35};
-double maxpos[] = {Coord_x, Coord_y, Coord_z, 0, 0, Coord_e};
+byte potPins[] = {32, 33, 34, 0, 0, 35};
+int potIn[sizeof(potPins)];
+//double maxpos[] = {Coord_x, Coord_y, Coord_z, 0, 0, Coord_e};
 
 byte buttonPins[] = {26, 25};
 unsigned long lastButtenPress[sizeof(buttonPins)];
@@ -49,8 +52,8 @@ void setup() {
   }
   setupCore2();
 
-  for (byte b = 0; b<6; b++){
-    offsets[b] = analogRead(pins[b]);
+  for (byte b = 0; b<sizeof(potPins); b++){
+    offsets[b] = analogRead(potPins[b]);
   }
 
 }
@@ -75,69 +78,118 @@ void loop() {
     }
   }
 
-  if(pinPressed[1]){
-    Serial.println("Hai");
-  }
-
   if(pinPressed[0]){
     BTSerial.print(0.0);
     BTSerial.print("o");
   }
+  
+  if(pinPressed[1]){
+    mode++;
+    mode %= 5;
+  }
 
-  for (byte b = 0; b<6; b++){
-    int i = analogRead(pins[b]);
+  for (byte b = 0; b < sizeof(potPins); b++){
+    int i = analogRead(potPins[b]);
 
     if (i<2048){
-      bodycoords[b/3][b%3] = mapf(i, 0.0, offsets[b],  maxpos[b], 0);
+      potIn[b] = mapf(i, 0.0, offsets[b],  0, 2047);
     }
     else{
-      bodycoords[b/3][b%3] = mapf(i, offsets[b], 4095.0,  0, -maxpos[b]);
+      potIn[b] = mapf(i, offsets[b], 4095.0,  2048, 4095);
     }
   }
 
-/*
-  bodycoords[0][0] = mapf(analogRead(pins[0]) - offsets[0], 0.0, 4095,  Coord_x, -Coord_x);
-  bodycoords[0][1] = mapf(analogRead(pins[1]) - offsets[1], 0.0, 4095, -Coord_y,  Coord_y);
-  bodycoords[0][2] = mapf(analogRead(pins[2]) - offsets[2], 0.0, 4095,  Coord_z, -Coord_z);
-//bodycoords[1][0] = mapf(analogRead(pins[3]) - offsets[3], 0.0, 4095,  Coord_ ,  Coord_ );
-//bodycoords[1][1] = mapf(analogRead(pins[4]) - offsets[4], 0.0, 4095,  Coord_ ,  Coord_ );
-  bodycoords[1][2] = mapf(analogRead(pins[5]) - offsets[5], 0.0, 4095,  Coord_e, -Coord_e);
-  */
+  switch (mode)  {
+    case 0:
+      bodycoords[0][0] = mapf(potIn[0], 0.0, 4095,  Coord_x, -Coord_x);
+      bodycoords[0][1] = mapf(potIn[1], 0.0, 4095, -Coord_y,  Coord_y);
+      bodycoords[0][2] = mapf(potIn[2], 0.0, 4095,  Coord_z, -Coord_z);
+    //bodycoords[1][0] = mapf(potIn[3], 0.0, 4095,  Coord_ ,  Coord_ );
+    //bodycoords[1][1] = mapf(potIn[4], 0.0, 4095,  Coord_ ,  Coord_ );
+      bodycoords[1][2] = mapf(potIn[5], 0.0, 4095,  Coord_e, -Coord_e);
+    /*
+      Serial.print(bodycoords[0][0]);
+      Serial.print("x ");
+      Serial.print(bodycoords[0][1]);
+      Serial.print("y ");
+      Serial.print(bodycoords[0][2]);
+      Serial.print("z ");
+      Serial.print(bodycoords[1][2]);
+      Serial.println("e ");
+    */
+      
+      if (abs(bodycoords[0][0] - oldbodycoords[0][0])>toleranz){
+        oldbodycoords[0][0] = bodycoords[0][0];
+        BTSerial.print(bodycoords[0][0]);
+        BTSerial.print("x ");
+      }
+      if (abs(bodycoords[0][1] - oldbodycoords[0][1])>toleranz){
+        oldbodycoords[0][1] = bodycoords[0][1];
+        BTSerial.print(bodycoords[0][1]);
+        BTSerial.print("y ");
+      }
+      if (abs(bodycoords[0][2] - oldbodycoords[0][2])>toleranz){
+        oldbodycoords[0][2] = bodycoords[0][2];
+        BTSerial.print(bodycoords[0][2]);
+        BTSerial.print("z ");
+      }
+      if (abs(bodycoords[1][2] - oldbodycoords[1][2])>toleranz){
+        oldbodycoords[1][2] = bodycoords[1][2];
+        BTSerial.print(bodycoords[1][2]);
+        BTSerial.print("e ");
+      }
+    break;
+       
+    case 1:
+  	  bodycoords[0][0] = mapf(potIn[0], 0.0, 4095,  Coord_x, -Coord_x);
+    //bodycoords[0][1] = mapf(potIn[1], 0.0, 4095, -Coord_y,  Coord_y);
+    //bodycoords[0][2] = mapf(potIn[2], 0.0, 4095,  Coord_z, -Coord_z);
+      bodycoords[1][0] = mapf(potIn[1], 0.0, 4095, -Coord_q,  Coord_q);
+      bodycoords[1][1] = mapf(potIn[2], 0.0, 4095,  Coord_w, -Coord_w);
+      bodycoords[1][2] = mapf(potIn[5], 0.0, 4095,  Coord_e, -Coord_e);
+      
+      if (abs(bodycoords[0][0] - oldbodycoords[0][0])>toleranz){
+        oldbodycoords[0][0] = bodycoords[0][0];
+        BTSerial.print(bodycoords[0][0]);
+        BTSerial.print("x ");
+      }
+      if (abs(bodycoords[1][0] - oldbodycoords[1][0])>toleranz){
+        oldbodycoords[1][0] = bodycoords[1][0];
+        BTSerial.print(bodycoords[1][0]);
+        BTSerial.print("q ");
+      }
+      if (abs(bodycoords[1][1] - oldbodycoords[1][1])>toleranz){
+        oldbodycoords[1][1] = bodycoords[1][1];
+        BTSerial.print(bodycoords[1][1]);
+        BTSerial.print("w ");
+      }
+      if (abs(bodycoords[1][2] - oldbodycoords[1][2])>toleranz){
+        oldbodycoords[1][2] = bodycoords[1][2];
+        BTSerial.print(bodycoords[1][2]);
+        BTSerial.print("e ");
+      }
+    break;
+    
+    case 2:
+  	  walk[0] = mapf(potIn[0], 0.0, 4095,  Coord_f, -Coord_f);
+    //bodycoords[0][1] = mapf(potIn[1], 0.0, 4095, -Coord_y,  Coord_y);
+    //bodycoords[0][2] = mapf(potIn[2], 0.0, 4095,  Coord_z, -Coord_z);
+    //bodycoords[1][0] = mapf(potIn[1], 0.0, 4095, -Coord_q,  Coord_q);
+    //bodycoords[1][1] = mapf(potIn[2], 0.0, 4095,  Coord_w, -Coord_w);
+    //bodycoords[1][2] = mapf(potIn[5], 0.0, 4095,  Coord_e, -Coord_e);
+      
+      if (abs(walk[0] - oldwalk[0])>toleranz){
+        oldwalk[0] = walk[0];
+        BTSerial.print(walk[0]);
+        BTSerial.print("f ");
+      }
+      
+    break;
+    
+    default:
 
-
-
-
-  Serial.print(bodycoords[0][0]);
-  Serial.print("x ");
-  Serial.print(bodycoords[0][1]);
-  Serial.print("y ");
-  Serial.print(bodycoords[0][2]);
-  Serial.print("z ");
-  Serial.print(bodycoords[1][2]);
-  Serial.println("e ");
-  
-  if (abs(bodycoords[0][0] - oldbodycoords[0][0])>toleranz){
-    oldbodycoords[0][0] = bodycoords[0][0];
-    BTSerial.print(bodycoords[0][0]);
-    BTSerial.print("x ");
+    break;
   }
-  if (abs(bodycoords[0][1] - oldbodycoords[0][1])>toleranz){
-    oldbodycoords[0][1] = bodycoords[0][1];
-    BTSerial.print(bodycoords[0][1]);
-    BTSerial.print("y ");
-  }
-  if (abs(bodycoords[0][2] - oldbodycoords[0][2])>toleranz){
-    oldbodycoords[0][2] = bodycoords[0][2];
-    BTSerial.print(bodycoords[0][2]);
-    BTSerial.print("z ");
-  }
-  if (abs(bodycoords[1][2] - oldbodycoords[1][2])>toleranz){
-    oldbodycoords[1][2] = bodycoords[1][2];
-    BTSerial.print(bodycoords[1][2]);
-    BTSerial.print("e ");
-  }
-  
-  delay(200);
 }
 
 void setupCore2() {
