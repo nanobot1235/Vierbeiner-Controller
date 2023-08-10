@@ -68,7 +68,7 @@ void loop() {
   for (byte b = 0; b < sizeof(pinPressed); b++)  {
     pinPressed[b] = false;
   }  
-
+//for debuncing 
   for(byte b = 0; b < sizeof(buttonPins); b++){
     if(digitalRead(buttonPins[b])){
       if((millis() - lastButtenPress[b]) > debounceTollerance){
